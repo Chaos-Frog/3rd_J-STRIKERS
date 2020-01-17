@@ -1,0 +1,29 @@
+body {
+	margin: 0;
+	background-color: #000;
+	background-image: url("BG.jpg");
+	color: #E0A425;
+	font-family: Monospace;
+	font-size: 13px;
+	line-height: 24px;
+}
+
+.info {
+	position: relative;
+}
+
+.info in {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+canvas {
+	position: absolute;
+	top:    0;
+	bottom: 0;
+	left:   0;
+	right:  0;
+	margin: auto;
+}
+
