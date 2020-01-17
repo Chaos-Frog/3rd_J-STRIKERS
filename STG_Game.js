@@ -973,8 +973,6 @@ function animation() {
                 ResetGame();
                 SceneNum = 1;
                 sceneMoving = false;
-                /* TEST */
-                frameCounter = 4000;
             }
         }
     } else if(SceneNum == 1) {
@@ -3191,6 +3189,12 @@ function StageBossCtrl() {
                         StarSet(eb.spr.position, 150, 200);
                         eb.active = false;
                     });
+                    if(endBoss.bombs) {
+                        endBoss.bombs.forEach((bomb) => {
+                            scene.remove(bomb);
+                        });
+                        endBoss.bombs = [];
+                    }
                     endBoss.HP = 1000;
                     endBoss.phase = 10;
                     endBoss.FC = 0;
