@@ -1,7 +1,6 @@
 // Moduleのインポート
 import * as THREE        from './three.module.js';
 import * as Title        from './STG_Title.js';
-import { OrbitControls } from './OrbitControls.js';
 import { WEBGL }         from './WebGL.js';
 import { GUI }           from './dat.gui.module.js';
 import { OBJLoader2 }    from './Loaders/OBJLoader2.js';
