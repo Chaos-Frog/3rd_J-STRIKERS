@@ -291,7 +291,7 @@ async function init_objects() {
                     playerPlane.rotation.set(0, 0, 1080*(Math.PI/180));
 
                     // プレイヤーコア
-                    const coreGeo = new THREE.IcosahedronBufferGeometry(CORE_SIZE + 4);
+                    const coreGeo = new THREE.IcosahedronBufferGeometry(CORE_SIZE + 8);
                     const coreMat = new THREE.MeshPhongMaterial({color:'#ff0000'});
                     playerCore = new THREE.Mesh(coreGeo, coreMat);
                     playerCore.layers.set(BULLET_L);
@@ -3533,7 +3533,7 @@ function PlayerBulletCol() {
                     t1.addVectors(bullet.spr.position, bullet.tip1);
                     const t2 = new THREE.Vector3();
                     t2.addVectors(bullet.spr.position, bullet.tip2);
-                    if(CLCollider(playerCore.position, CORE_SIZE+5, t1, t2)) {
+                    if(CLCollider(playerCore.position, CORE_SIZE+2, t1, t2)) {
                         PlayerDestroy();
                         console.log("Hit");
                     }
