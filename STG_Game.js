@@ -71,7 +71,7 @@ let PBulletTex = [];  // プレイヤー弾画像２種
 let muzzleFlashMat;   // マズルフラッシュ画像
 let hitTex;           // ヒット画像
 let bomber;           // ボンバー
-const CORE_SIZE = 16; // コアサイズ
+const CORE_SIZE = 14; // コアサイズ
 
 let comGaugeImg = new Image(); // コンボゲージImg
 let comFrameImg = new Image(); // コンボフレームImg
@@ -88,6 +88,7 @@ let sounds = {
     bomb03: new Audio(),
     bomb04: new Audio(),
     bomb05: new Audio(),
+    bomb06: new Audio(),
     bulletImpact: new Audio(),
     getStar: new Audio(),
     playerShot: new Audio(),
@@ -290,7 +291,7 @@ async function init_objects() {
                     playerPlane.rotation.set(0, 0, 1080*(Math.PI/180));
 
                     // プレイヤーコア
-                    const coreGeo = new THREE.IcosahedronBufferGeometry(24);
+                    const coreGeo = new THREE.IcosahedronBufferGeometry(CORE_SIZE + 4);
                     const coreMat = new THREE.MeshPhongMaterial({color:'#ff0000'});
                     playerCore = new THREE.Mesh(coreGeo, coreMat);
                     playerCore.layers.set(BULLET_L);
@@ -788,6 +789,8 @@ async function init_objects() {
             await sounds.bomb04.load();
             sounds.bomb05.src = "./Assets/audio/bomb05.mp3";
             await sounds.bomb05.load();
+            sounds.bomb06.src = "./Assets/audio/bomb06.mp3";
+            await sounds.bomb06.load();
             sounds.bulletImpact.src = "./Assets/audio/bulletImpact.mp3";
             await sounds.bulletImpact.load();
             sounds.getStar.src = "./Assets/audio/getStar.mp3";
@@ -1066,7 +1069,7 @@ async function GameAnimation() {
     // プレイヤー処理
     PlayerMove()
     if(!player.death & !player.standby) {
-        if(!result.enable) {
+        if(!result.enable & !endBoss.death) {
             PlayerBomber();
             PlayerShot();
         }
@@ -1231,15 +1234,15 @@ function WARNING() {
             let s = (warning.FC-10)/10;
             UIcontext.drawImage(warning.imgs[0], (-350*ratio)*s+width/2, (-150*ratio)+hight/2, (700*ratio)*s, (300*ratio));
         } else if(warning.FC <= 200){
-            let xmove = (warning.FC-20)*10;
-            if(xmove >= 700) xmove -= Math.floor(xmove/700)*700;
+            let xmove = (warning.FC-20)*14;
+            if(xmove >= 800) xmove -= Math.floor(xmove/800)*800;
             UIcontext.drawImage(warning.imgs[0], -350*ratio+width/2, -150*ratio+hight/2, 700*ratio, 300*ratio);
             UIcontext.globalAlpha = 1 - (warning.FC-20)%16 * 0.025;
-            UIcontext.drawImage(warning.imgs[1], (-350-xmove)*ratio+width/2, -150*ratio+hight/2, 700*ratio, 100*ratio);
-            UIcontext.drawImage(warning.imgs[1], (350-xmove)*ratio+width/2, -150*ratio+hight/2, 700*ratio, 100*ratio);
+            UIcontext.drawImage(warning.imgs[1], (-400-xmove)*ratio+width/2, -150*ratio+hight/2, 800*ratio, 100*ratio);
+            UIcontext.drawImage(warning.imgs[1], (400-xmove)*ratio+width/2, -150*ratio+hight/2, 800*ratio, 100*ratio);
             UIcontext.drawImage(warning.imgs[2], -350*ratio+width/2, -50*ratio+hight/2, 700*ratio, 100*ratio);
-            UIcontext.drawImage(warning.imgs[1], (-350+xmove)*ratio+width/2, 50*ratio+hight/2, 700*ratio, 100*ratio);
-            UIcontext.drawImage(warning.imgs[1], (-1050+xmove)*ratio+width/2, 50*ratio+hight/2, 700*ratio, 100*ratio);
+            UIcontext.drawImage(warning.imgs[1], (-400+xmove)*ratio+width/2, 50*ratio+hight/2, 800*ratio, 100*ratio);
+            UIcontext.drawImage(warning.imgs[1], (-1200+xmove)*ratio+width/2, 50*ratio+hight/2, 800*ratio, 100*ratio);
         } else if(warning.FC <= 210){
             let s = 1-(warning.FC-200)/10;
             UIcontext.drawImage(warning.imgs[0], (-350*ratio)*s+width/2, (-150*ratio)*s+hight/2, (700*ratio)*s, (300*ratio)*s);
@@ -2458,14 +2461,14 @@ function StageBossCtrl() {
                         new THREE.Vector3(0, 370, -350),
                         new THREE.Vector3(-400, 370, 0),
                     ];
-                    if(endBoss.FC%10 == 0) {
-                        let num = endBoss.FC % 90 / 10;
+                    if(endBoss.FC%8 == 0) {
+                        let num = endBoss.FC % 72 / 8;
                         let exp = AnimSpriteSet(explosionImg[num%2], new THREE.Vector3().addVectors(endBoss.model.position, expPoses[num]), 2, 1200+(num%3)*-100+100);
                         exp.type = 1;
                         animEffects.push(exp);
                         scene.add(exp);
 
-                        if((endBoss.FC-60)%90 == 40 || (endBoss.FC-60)%90 == 70) {
+                        if((endBoss.FC-60)%72 == 40 || (endBoss.FC-60)%72 == 70) {
                             sounds.bomb04.currentTime = 0;
                             sounds.bomb04.play();
                         } else {
@@ -2496,13 +2499,13 @@ function StageBossCtrl() {
                     animEffects.push(exp);
                     scene.add(exp);
 
-                    sounds.bomb05.currentTime = 0;
-                    sounds.bomb05.play();
+                    sounds.bomb06.currentTime = 0;
+                    sounds.bomb06.play();
 
                     scene.remove(endBoss.model);
                 }
             }
-            if(endBoss.FC == 350) {
+            if(endBoss.FC == 550) {
                 stageBoss = false;
                 result.enable = true;
                 result.FC = 1;
@@ -2915,8 +2918,13 @@ function StageBossCtrl() {
                             if(endBoss.bombs[i].FC <= 0) {
                                 let pos = endBoss.bombs[i].position;
                                 for(let i=0; i<12; i++) {
-                                    SetEnemyBullet(pos, 0, Math.random()*6 + 10, Math.random()*360, 80);
+                                    let angle = (-10 + Math.random()*20) + i*30;
+                                    SetEnemyBullet(pos, 0, Math.random()*6 + 10, angle, 80);
                                 }
+
+                                sounds.bomb01.currentTime = 0;
+                                sounds.bomb01.play();
+
                                 scene.remove(endBoss.bombs[i]);
                                 endBoss.bombs.splice(i, 1);
                             } else {
@@ -3007,14 +3015,14 @@ function StageBossCtrl() {
                             bossActions.bitLOpen.play();
                             bossActions.bitROpen.play();
                         }
-                        if(endBoss.FC % 60 == 0) {
+                        if(endBoss.FC % 80 == 0) {
                             let lpos = new THREE.Vector3().setFromMatrixPosition(endBoss.model.parts[1].shotPos[0].matrixWorld); 
                             let rpos = new THREE.Vector3().setFromMatrixPosition(endBoss.model.parts[2].shotPos[0].matrixWorld); 
                             SetEnemyBullet(lpos, 2, 20, angleL+90, 250);
                             SetEnemyBullet(rpos, 2, 20, angleR+90, 250);
                         }
-                        if(endBoss.FC > 60) {
-                            if(endBoss.FC % 60 == 15) {
+                        if(endBoss.FC > 80) {
+                            if(endBoss.FC % 80 == 20) {
                                 let poses = [
                                     new THREE.Vector3().setFromMatrixPosition(endBoss.model.parts[1].shotPos[1].matrixWorld),
                                     new THREE.Vector3().setFromMatrixPosition(endBoss.model.parts[1].shotPos[2].matrixWorld),
@@ -3027,7 +3035,7 @@ function StageBossCtrl() {
                                     SetEnemyBullet(poses[i], 0, 18, angleL+120, 80);
                                 }
                             }
-                            if(endBoss.FC % 60 == 45) {
+                            if(endBoss.FC % 80 == 60) {
                                 let poses = [
                                     new THREE.Vector3().setFromMatrixPosition(endBoss.model.parts[2].shotPos[1].matrixWorld),
                                     new THREE.Vector3().setFromMatrixPosition(endBoss.model.parts[2].shotPos[2].matrixWorld),
@@ -3226,8 +3234,10 @@ function StageBossCtrl() {
                         animEffects.push(exp);
                         scene.add(exp);
                     }
-                    sounds.bomb04.currentTime = 0;
-                    sounds.bomb04.play();
+
+                    sounds.bomb05.currentTime = 0;
+                    sounds.bomb05.play();
+
                     endBoss.model.remove(endBoss.model.parts[3], endBoss.model.parts[4], endBoss.model.parts[5]);
                 }
             } else {
@@ -3268,6 +3278,9 @@ function StageBossCtrl() {
                         exp2.type = 2;
                         animEffects.push(exp1, exp2);
                         scene.add(exp1, exp2);
+
+                        sounds.bomb02.currentTime = 0;
+                        sounds.bomb02.play();
 
                         StarSet(lbp, 800, 100000);
                         StarSet(rbp, 800, 100000);
@@ -3311,12 +3324,19 @@ function StageBossCtrl() {
                         animEffects.push(exp1, exp2);
                         scene.add(exp1, exp2)
 
+                        sounds.bomb02.currentTime = 0;
+                        sounds.bomb02.play();
+
                         endBoss.model.remove(endBoss.model.parts[1], endBoss.model.parts[2]);
                     }
                     let exp = AnimSpriteSet(explosionImg[1], endBoss.model.position, 3, 2400);
                     exp.type = 1;
                     animEffects.push(exp);
                     scene.add(exp);
+
+                    sounds.bomb05.currentTime = 0;
+                    sounds.bomb05.play();
+
                     endBoss.active = false;
                     endBoss.death = true;
                     endBoss.FC = 0;
