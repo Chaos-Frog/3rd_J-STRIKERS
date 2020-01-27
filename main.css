@@ -4,12 +4,13 @@ body {
 	background-image: url("BG.jpg");
 	color: #E0A425;
 	font-family: Monospace;
-	font-size: 13px;
-	line-height: 24px;
+	font-size: 12px;
+	line-height: 22px;
 }
 
 .info {
 	position: relative;
+	font-family: 'HiraMinPro-W6';
 }
 
 .info in {

@@ -97,11 +97,10 @@ let sounds = {
     playerDeath: new Audio(),
     playerReturn: new Audio(),
     count: new Audio(),
-};
-// BGM
-let bgms = {
-    stage: new Audio(),
-    boss: new Audio(),
+    gameover: new Audio(),
+    warning: new Audio(),
+    stageBGM: new Audio(),
+    bossBGM: new Audio(),
 };
 
 let player = { // プレイヤーオブジェクト
@@ -807,6 +806,16 @@ async function init_objects() {
             await sounds.playerReturn.load();
             sounds.count.src = "./Assets/audio/count.mp3";
             await sounds.count.load();
+            sounds.gameover.src = "./Assets/audio/gameover.mp3";
+            await sounds.gameover.load();
+            sounds.warning.src = "./Assets/audio/warning.mp3";
+            await sounds.warning.load();
+            sounds.stageBGM.src = "./Assets/audio/stage_bgm.mp3";
+            sounds.stageBGM.loop = true;
+            await sounds.stageBGM.load();
+            sounds.bossBGM.src = "./Assets/audio/boss_bgm.mp3";
+            sounds.bossBGM.loop = true;
+            await sounds.bossBGM.load();
             re(console.log("Audio:Completed"));
         });
     }
@@ -924,6 +933,10 @@ async function StageDataLoad() {
                 stage[i].danmakuP = std[i].dmk;
                 stage[i].moveP = std[i].mov;
             }
+            stage.sort(function(a, b) {
+                if(a.frame > b.frame) return 1;
+                else                  return -1;
+            })
             mbFrame = data.mediumBoss;
             sbFrame = data.stageBoss;
 
@@ -1017,6 +1030,12 @@ function animation() {
                     }
                     contiCtd--;
                 } else {
+                    if(loadOpacity == 0) {
+                        sounds.stageBGM.pause();
+                        sounds.bossBGM.pause();
+                        sounds.gameover.currentTime = 0;
+                        sounds.gameover.play();
+                    }
                     UIcontext.clearRect(0, 0, width, hight);
                     if(loadOpacity < 1) {
                         UIcontext.globalAlpha = 0.6;
@@ -1053,6 +1072,19 @@ function animation() {
     }
 }
 async function GameAnimation() {
+    // BGM処理
+    if(frameCounter == 0) {
+        sounds.stageBGM.volume = 0;
+        sounds.stageBGM.currentTime = 0;
+        sounds.stageBGM.play();
+    }
+    if(frameCounter >= 0 & frameCounter <= 20) {
+        sounds.stageBGM.volume = frameCounter/20;
+    }
+    if(frameCounter >= sbFrame-60 & frameCounter < sbFrame) {
+        sounds.stageBGM.volume = Math.abs(frameCounter-sbFrame) / 60;
+    }
+
     // UI描画
     UIController();
     Result();
@@ -1060,19 +1092,17 @@ async function GameAnimation() {
     // 擬似処理落ち
     frameCounterAll++;
     let objNums = enemyBullets.length + playerBullets.length + animEffects.length
-    if(objNums >= 600) {
+    if(objNums >= 500) {
         if(frameCounterAll % 2 == 0) return;
-    } else if(objNums >= 400) {
+    } else if(objNums >= 320) {
         if(frameCounterAll % 4 == 0) return;
     }
 
     // プレイヤー処理
     PlayerMove()
     if(!player.death & !player.standby) {
-        if(!result.enable & !endBoss.death) {
-            PlayerBomber();
-            PlayerShot();
-        }
+        PlayerBomber();
+        PlayerShot();
     }
 
     // ステージ処理（敵生成）
@@ -1087,34 +1117,12 @@ async function GameAnimation() {
         }
 
         if(frameCounter == mbFrame) {
-            mediumBoss.HP = 1200;
-            mediumBoss.death = false;
-            mediumBoss.active = false;
-            mediumBoss.FC = 0;
-            mediumBoss.phase = 1;
-            mediumBoss.ma = 0;
             stageMid = true;
 
             frameCounter++;
         }
 
         if(frameCounter == sbFrame) {
-            endBoss.HP = 3600;
-            endBoss.FC = 0;
-            endBoss.phase = 0;
-            endBoss.active = false;
-            endBoss.death = false;
-            endBoss.model.remove(endBoss.model.parts[1], endBoss.model.parts[2], endBoss.model.parts[3], endBoss.model.parts[4], endBoss.model.parts[5]);
-            endBoss.model.parts[1].position.set(600, 0, 0);
-            endBoss.model.parts[1].rotation.set(0, 0, 0);
-            endBoss.model.parts[2].position.set(-600, 0, 0);
-            endBoss.model.parts[2].rotation.set(0, 0, 0);
-            endBoss.model.parts[4].rotation.set(0, 0, 0);
-            endBoss.model.parts[5].rotation.set(0, 0, 0);
-            endBoss.model.add(endBoss.model.parts[1], endBoss.model.parts[2], endBoss.model.parts[3], endBoss.model.parts[4], endBoss.model.parts[5]);
-            for(let i=0; i<bossAnimMixers.length; i++) {
-                bossAnimMixers[i].stopAllAction();
-            }
             stageBoss = true;
             warning.enable = true;
             warning.FC = 1;
@@ -1145,8 +1153,8 @@ async function GameAnimation() {
     }
 
     // 背景スクロール
-    skyBG.material.map.offset.y += 0.005;
-    if(skyBG.material.map.offset.y >= 1.0) skyBG.material.map.offset.y = 0;
+    skyBG.material.map.offset.y += 0.006;
+    if(skyBG.material.map.offset.y >= 1.0) skyBG.material.map.offset.y -= 1.0;
 
     EffectCtrl(); // エフェクト処理
     StarCtrl();   // スター処理
@@ -1224,6 +1232,10 @@ function UIController() {
 }
 function WARNING() {
     if(warning.enable) {
+        if(warning.FC == 1) {
+            sounds.warning.currentTime = 0;
+            sounds.warning.play();
+        }
         enemyBullets.forEach((b) => { b.active = false; });
         UIcontext.globalAlpha = 1;
         UIcontext.fillStyle = "#ffffff";
@@ -1312,7 +1324,7 @@ function Result() {
 }
 function ResetGame() {
     frameCounterAll = 0;
-    frameCounter = 0;
+    frameCounter = -60;
     score = 0;
     combo = 0;
     comboGauge = 0;
@@ -1330,7 +1342,12 @@ function ResetGame() {
     scene.add(playerBarrier);
     playerBullets.forEach((pb) => { scene.remove(pb); });
     playerBullets = [];
+    scene.remove(bomber);
     bombed = false;
+    player.shotFire.forEach( function(ele, i) {
+        scene.remove(ele);
+        player.shotFire.splice(i, 0);
+    });
     
     enemys.forEach((e) => { scene.remove(e.model); });
     enemys = [];
@@ -1346,8 +1363,39 @@ function ResetGame() {
     for(let i=0; i<bossAnimMixers.length; i++) {
         bossAnimMixers[i].stopAllAction();
     }
+
+    mediumBoss.HP = 1200;
+    mediumBoss.death = false;
     mediumBoss.active = false;
+    mediumBoss.FC = 0;
+    mediumBoss.phase = 1;
+    mediumBoss.ma = 0;
+
+    endBoss.HP = 2600;
+    endBoss.FC = 0;
+    endBoss.phase = 0;
     endBoss.active = false;
+    endBoss.death = false;
+    endBoss.model.remove(endBoss.model.parts[1], endBoss.model.parts[2], endBoss.model.parts[3], endBoss.model.parts[4], endBoss.model.parts[5]);
+    endBoss.model.parts[1].position.set(600, 0, 0);
+    endBoss.model.parts[1].rotation.set(0, 0, 0);
+    endBoss.model.parts[2].position.set(-600, 0, 0);
+    endBoss.model.parts[2].rotation.set(0, 0, 0);
+    endBoss.model.parts[4].rotation.set(0, 0, 0);
+    endBoss.model.parts[5].rotation.set(0, 0, 0);
+    endBoss.model.add(endBoss.model.parts[1], endBoss.model.parts[2], endBoss.model.parts[3], endBoss.model.parts[4], endBoss.model.parts[5]);
+    bossActions.mainOpen.stop();
+    bossActions.mainClose.play();
+    bossActions.frontOpen.stop();
+    bossActions.frontClose.play();
+    bossActions.bitLOpen.stop();
+    bossActions.bitLClose.play();
+    bossActions.bitROpen.stop();
+    bossActions.bitRClose.play();
+    for(let i=0; i<bossAnimMixers.length; i++) {
+        bossAnimMixers[i].update(1);
+    }
+
     stageMid = false;
     stageBoss = false;
     stageCount = 0;
@@ -1507,7 +1555,7 @@ function PlayerMove() {
 // プレイヤーショット
 function PlayerShot() { 
     if(player.cooltime == 0) {
-        if((keyCShot || keyShot) && !bombed) {
+        if((keyCShot || keyShot) & !bombed & !result.enable & !endBoss.death) {
             for(let i=0; i<player.shotPos.length; i++) {
                 // ショット生成
                 let shot;
@@ -1755,7 +1803,7 @@ function PlayerBulletControll() {
 // ボンバー処理
 function PlayerBomber() {
     if(!bombed) {
-        if(keyBomb & player.bomb > 0) {
+        if(keyBomb & player.bomb > 0 & !result.enable & !endBoss.death) {
             bomber.position.copy(playerPlane.position);
             bomber.position.z -= 500;
             bomber.material.map.offset.set(0, 0.8);
@@ -1800,7 +1848,6 @@ function PlayerBomber() {
             scene.remove(bomber);
             bombed = false;
             player.invinsible = false;
-            console.log("Bomber_End");
         }
     }
 }
@@ -2379,6 +2426,10 @@ function StageBossCtrl() {
                     endBoss.model.position.set(0, -4000, 6000);
                     endBoss.model.rotation.set(0, Math.PI, 0);
                     scene.add(endBoss.model);
+                    endBoss.moveItem = [];
+                    endBoss.shotItem = [];
+                    sounds.bossBGM.currentTime = 0;
+                    sounds.bossBGM.play();
                 } else {
                     let addy = (0 - endBoss.model.position.y) * 0.035;
                     if(addy < 4) addy = 4;
@@ -2398,8 +2449,8 @@ function StageBossCtrl() {
                         endBoss.phase = 1;
                         endBoss.active = true;
                     }
-                 }
-                 endBoss.FC++;
+                }
+                endBoss.FC++;
             } else if(endBoss.phase == 10) {
                 if(endBoss.FC <= 30) {
                     if(endBoss.FC == 0) {
@@ -2468,7 +2519,7 @@ function StageBossCtrl() {
                         animEffects.push(exp);
                         scene.add(exp);
 
-                        if((endBoss.FC-60)%72 == 40 || (endBoss.FC-60)%72 == 70) {
+                        if((endBoss.FC)%72 == 40 || (endBoss.FC)%72 == 64) {
                             sounds.bomb04.currentTime = 0;
                             sounds.bomb04.play();
                         } else {
@@ -3176,14 +3227,14 @@ function StageBossCtrl() {
 
         function HPCtrl() {
             if(endBoss.phase < 10) {
-                if(endBoss.HP <= 2600) {
+                if(endBoss.HP <= 2000) {
                     if(endBoss.FC % 5 == 0) {
                         let exp = AnimSpriteSet(explosionImg[0], new THREE.Vector3().addVectors(endBoss.model.position, new THREE.Vector3(100, 0, 500)), 3, 300);
                         exp.type = 2;
                         animEffects.push(exp);
                         scene.add(exp);
                     }
-                    if(endBoss.HP <= 1800) {
+                    if(endBoss.HP <= 1500) {
                         if(endBoss.FC % 5 == 3) {
                             let exp = AnimSpriteSet(explosionImg[1], new THREE.Vector3().addVectors(endBoss.model.position, new THREE.Vector3(-80, 0, 1500)), 3, 240);
                             exp.type = 2;
@@ -3341,6 +3392,8 @@ function StageBossCtrl() {
                     endBoss.death = true;
                     endBoss.FC = 0;
                     endBoss.model.position.y = 0;
+
+                    sounds.bossBGM.pause();
                 }
             }
         }
@@ -3442,7 +3495,7 @@ function StarCtrl() {
 
         if(ss.position.z > 1800) {
             ss.active = false;
-        } else if(CircleCollider(playerCore.position, ss.position, 80, ss.scale.x/2) & !player.death & !player.standby) {
+        } else if(CircleCollider(playerCore.position, ss.position, 180, ss.scale.x/2) & !player.death & !player.standby) {
             score += ss.point * Math.floor(combo+1);
             ss.active = false;
             sounds.getStar.currentTime = 0;
