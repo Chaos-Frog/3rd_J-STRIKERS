@@ -47,8 +47,7 @@ Gダライアス、レイディアントシルバーガン、斑鳩のような3
 
 
 # 製作
-### 混沌の蛙 F-Rog
-* [Twitter]("https://twitter.com/CF_Frog")  
+### 混沌の蛙 F-Rog [[Twitter]](https://twitter.com/CF_Frog)  
 ### クレジット:
 * [背景画像]
     * Neuro!Image 様
