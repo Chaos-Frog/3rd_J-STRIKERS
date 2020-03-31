@@ -1,7 +1,7 @@
 # 3rd J-STRIKERS
 Webで動く3Dグラフィック弾幕シューティング  
 Three.jsを使用  
-公開ページ => https://chaos-frog.github.io/3rd_J-STRIKERS.github.io/
+公開ページ => https://freegame-mugen.jp/shooting/game_8488.html
 
 # 目次
 * [概要](#概要)
