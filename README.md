@@ -2,6 +2,7 @@
 Webで動く3Dグラフィック弾幕シューティング  
 Three.jsを使用  
 公開ページ => https://freegame-mugen.jp/shooting/game_8488.html
+デモ動画 => https://youtu.be/rLIN28-TdCY
 
 # 目次
 * [概要](#概要)
